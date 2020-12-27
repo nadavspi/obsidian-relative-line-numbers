@@ -1,8 +1,8 @@
 {
 	"id": "obsidian-relative-line-numbers",
 	"name": "Relative Line Numbers",
-	"version": "1.0.0",
-	"minAppVersion": "0.9.17",
+	"version": "1.0.1",
+	"minAppVersion": "0.10.0",
 	"description": "Enables relative line numbers in editor mode",
 	"author": "Nadav Spiegelman",
 	"authorUrl": "https://nadav.is",
