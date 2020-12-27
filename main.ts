@@ -1,8 +1,6 @@
 import { Plugin } from "obsidian";
 
 export default class RelativeLineNumbers extends Plugin {
-  initialLineNumberFormatter: (line: number) => string;
-
   onload() {
     // @ts-ignore
     const showLineNumber: Boolean = this.app.vault.getConfig("showLineNumber");
@@ -12,16 +10,18 @@ export default class RelativeLineNumbers extends Plugin {
 
     this.registerCodeMirror((cm) => {
       cm.on("cursorActivity", this.relativeLineNumbers);
-      // I haven't found a way to get the default value for an option,
-      // so we'll store the value at the time we loaded
-      this.initialLineNumberFormatter = cm.getOption("lineNumberFormatter");
     });
   }
 
   onunload() {
     this.app.workspace.iterateCodeMirrors((cm) => {
       cm.off("cursorActivity", this.relativeLineNumbers);
-      cm.setOption("lineNumberFormatter", this.initialLineNumberFormatter);
+      // @ts-ignore
+      cm.setOption(
+        "lineNumberFormatter",
+        // @ts-ignore
+        CodeMirror.defaults["lineNumberFormatter"]
+      );
     });
   }
 
