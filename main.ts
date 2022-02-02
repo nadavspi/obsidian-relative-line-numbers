@@ -4,16 +4,27 @@ export default class RelativeLineNumbers extends Plugin {
   onload() {
     // @ts-ignore
     const showLineNumber: Boolean = this.app.vault.getConfig("showLineNumber");
-    if (!showLineNumber) {
-      return;
+
+    if (showLineNumber) {
+      this.enable()
     }
 
+    this.setupConfigChangeListener()
+  }
+
+  onunload() {
+    this.disable()
+  }
+
+  enable() {
+    this.enabled = true;
     this.registerCodeMirror((cm) => {
       cm.on("cursorActivity", this.relativeLineNumbers);
     });
   }
 
-  onunload() {
+  disable() {
+    this.enabled = false;
     this.app.workspace.iterateCodeMirrors((cm) => {
       cm.off("cursorActivity", this.relativeLineNumbers);
       // @ts-ignore
@@ -23,6 +34,22 @@ export default class RelativeLineNumbers extends Plugin {
         CodeMirror.defaults["lineNumberFormatter"]
       );
     });
+  }
+
+  setupConfigChangeListener() {
+    const configChangedEvent = this.app.vault.on('config-changed', () => {
+      // @ts-ignore
+      const showLineNumber: Boolean = this.app.vault.getConfig("showLineNumber");
+      if (showLineNumber && !this.enabled) {
+        this.enable()
+      } else if (!showLineNumber && this.enabled) {
+        this.disable()
+      }
+    });
+
+    configChangedEvent.ctx = this;
+
+    this.registerEvent(configChangedEvent)
   }
 
   relativeLineNumbers(cm: CodeMirror.Editor) {
