@@ -1,34 +1,61 @@
 import { Plugin } from "obsidian";
+import { lineNumbersRelative } from "codemirror-line-numbers-relative";
+
+interface DisableOptions {
+  unload?: boolean;
+}
 
 export default class RelativeLineNumbers extends Plugin {
   enabled: boolean;
 
-  onload() {
+  isLegacy() {
+    return (this.app as any).vault.config?.legacyEditor;
+  }
+
+  async onload() {
     // @ts-ignore
     const showLineNumber: Boolean = this.app.vault.getConfig("showLineNumber");
-
     if (showLineNumber) {
-      this.enable()
+      this.enable();
     }
 
-    this.setupConfigChangeListener()
+    this.setupConfigChangeListener();
   }
 
   onunload() {
-    this.disable()
+    this.disable();
   }
 
   enable() {
     this.enabled = true;
+
+    if (this.isLegacy()) {
+      this.legacyEnable();
+    } else {
+      this.registerEditorExtension(lineNumbersRelative());
+    }
+  }
+
+  disable({ unload = false }: DisableOptions = {}) {
+    this.enabled = false;
+    if (this.isLegacy) {
+      this.legacyDisable();
+    }
+
+    if (unload) {
+      this.unload();
+    }
+  }
+
+  legacyEnable() {
     this.registerCodeMirror((cm) => {
-      cm.on("cursorActivity", this.relativeLineNumbers);
+      cm.on("cursorActivity", this.legacyRelativeLineNumbers);
     });
   }
 
-  disable() {
-    this.enabled = false;
+  legacyDisable() {
     this.app.workspace.iterateCodeMirrors((cm) => {
-      cm.off("cursorActivity", this.relativeLineNumbers);
+      cm.off("cursorActivity", this.legacyRelativeLineNumbers);
       // @ts-ignore
       cm.setOption(
         "lineNumberFormatter",
@@ -40,22 +67,24 @@ export default class RelativeLineNumbers extends Plugin {
 
   setupConfigChangeListener() {
     // @ts-ignore
-    const configChangedEvent = this.app.vault.on('config-changed', () => {
+    const configChangedEvent = this.app.vault.on("config-changed", () => {
       // @ts-ignore
-      const showLineNumber: Boolean = this.app.vault.getConfig("showLineNumber");
+      const showLineNumber: Boolean = this.app.vault.getConfig(
+        "showLineNumber"
+      );
       if (showLineNumber && !this.enabled) {
-        this.enable()
+        this.enable();
       } else if (!showLineNumber && this.enabled) {
-        this.disable()
+        this.disable({ unload: true });
       }
     });
 
     configChangedEvent.ctx = this;
 
-    this.registerEvent(configChangedEvent)
+    this.registerEvent(configChangedEvent);
   }
 
-  relativeLineNumbers(cm: CodeMirror.Editor) {
+  legacyRelativeLineNumbers(cm: CodeMirror.Editor) {
     const current = cm.getCursor().line + 1;
     if (cm.state.curLineNum === current) {
       return;
