@@ -1,6 +1,6 @@
 {
   "name": "obsidian-relative-line-numbers",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Enables relative line numbers in editor mode",
   "main": "main.js",
   "scripts": {
