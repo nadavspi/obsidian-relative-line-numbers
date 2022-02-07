@@ -28,6 +28,7 @@ export default class RelativeLineNumbers extends Plugin {
     if (this.isLegacy()) {
       this.legacyEnable();
     } else {
+      // @ts-ignore
       this.registerEditorExtension(lineNumbersRelative());
     }
   }
@@ -71,6 +72,7 @@ export default class RelativeLineNumbers extends Plugin {
       }
     });
 
+    // @ts-ignore
     configChangedEvent.ctx = this;
 
     this.registerEvent(configChangedEvent);
