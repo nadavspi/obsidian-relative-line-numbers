@@ -1,10 +1,6 @@
 import { Plugin } from "obsidian";
 import { lineNumbersRelative } from "codemirror-line-numbers-relative";
 
-interface DisableOptions {
-  unload?: boolean;
-}
-
 export default class RelativeLineNumbers extends Plugin {
   enabled: boolean;
 
@@ -36,14 +32,10 @@ export default class RelativeLineNumbers extends Plugin {
     }
   }
 
-  disable({ unload = false }: DisableOptions = {}) {
+  disable() {
     this.enabled = false;
     if (this.isLegacy) {
       this.legacyDisable();
-    }
-
-    if (unload) {
-      this.unload();
     }
   }
 
@@ -75,7 +67,7 @@ export default class RelativeLineNumbers extends Plugin {
       if (showLineNumber && !this.enabled) {
         this.enable();
       } else if (!showLineNumber && this.enabled) {
-        this.disable({ unload: true });
+        this.disable();
       }
     });
 
