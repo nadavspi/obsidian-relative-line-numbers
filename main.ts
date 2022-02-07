@@ -1,8 +1,11 @@
-import { Plugin } from "obsidian";
+import { Plugin, Workspace } from "obsidian";
+import { Extension } from "@codemirror/state";
 import { lineNumbersRelative } from "codemirror-line-numbers-relative";
 
 export default class RelativeLineNumbers extends Plugin {
   enabled: boolean;
+
+  extensions: Extension[];
 
   isLegacy() {
     return (this.app as any).vault.config?.legacyEditor;
@@ -11,6 +14,13 @@ export default class RelativeLineNumbers extends Plugin {
   async onload() {
     // @ts-ignore
     const showLineNumber: Boolean = this.app.vault.getConfig("showLineNumber");
+
+    this.extensions = [];
+
+    if (!this.isLegacy) {
+      this.registerEditorExtension(this.extensions);
+    }
+
     if (showLineNumber) {
       this.enable();
     }
@@ -28,8 +38,9 @@ export default class RelativeLineNumbers extends Plugin {
     if (this.isLegacy()) {
       this.legacyEnable();
     } else {
+      this.extensions.push(lineNumbersRelative());
       // @ts-ignore
-      this.registerEditorExtension(lineNumbersRelative());
+      this.app.workspace.updateOptions();
     }
   }
 
@@ -37,6 +48,10 @@ export default class RelativeLineNumbers extends Plugin {
     this.enabled = false;
     if (this.isLegacy) {
       this.legacyDisable();
+    } else {
+      this.extensions.pop();
+      // @ts-ignore
+      this.app.workspace.updateOptions();
     }
   }
 
