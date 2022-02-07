@@ -1,6 +1,8 @@
 import { Plugin } from "obsidian";
 
 export default class RelativeLineNumbers extends Plugin {
+  enabled: boolean;
+
   onload() {
     // @ts-ignore
     const showLineNumber: Boolean = this.app.vault.getConfig("showLineNumber");
@@ -37,6 +39,7 @@ export default class RelativeLineNumbers extends Plugin {
   }
 
   setupConfigChangeListener() {
+    // @ts-ignore
     const configChangedEvent = this.app.vault.on('config-changed', () => {
       // @ts-ignore
       const showLineNumber: Boolean = this.app.vault.getConfig("showLineNumber");
