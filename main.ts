@@ -1,5 +1,5 @@
 import { Plugin } from "obsidian";
-import { lineNumbersRelative } from "codemirror-line-numbers-relative";
+import { lineNumbersRelative } from "./extension";
 
 export default class RelativeLineNumbers extends Plugin {
   enabled: boolean;
