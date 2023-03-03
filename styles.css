@@ -1,0 +1,10 @@
+.relative-line-numbers-mono {
+  font-family: monospace;
+  white-space: pre;
+}
+
+.cm-lineNumbers {
+  font-family: monospace;
+  white-space: pre;
+  min-width: 25px; /* prevent relative line numbers from shifting on files with ~10-20 lines */
+}
