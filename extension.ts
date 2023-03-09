@@ -43,8 +43,8 @@ const absoluteLineNumberGutter = gutter({
 
     return null;
   },
-  initialSpacer: () => {
-    const spacer = new Marker("0");
+  initialSpacer: (view: EditorView) => {
+    const spacer = new Marker("0".repeat(linesCharLength(view.state)));
     return spacer;
   },
 });
