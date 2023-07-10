@@ -12,6 +12,7 @@ class Marker extends GutterMarker {
   constructor(text: string) {
     super();
     this.text = text;
+    this.elementClass = "relative-line-numbers-mono";
   }
 
   toDOM() {
@@ -19,10 +20,19 @@ class Marker extends GutterMarker {
   }
 }
 
+function linesCharLength(state: EditorState): number {
+  /**
+   * Get the character length of the number of lines in the document
+   * Example: 100 lines -> 3 characters
+   */
+  return state.doc.lines.toString().length;
+}
+
 const absoluteLineNumberGutter = gutter({
   lineMarker: (view, line) => {
     const lineNo = view.state.doc.lineAt(line.from).number;
-    const absoluteLineNo = new Marker(lineNo.toString());
+    const charLength = linesCharLength(view.state);
+    const absoluteLineNo = new Marker(lineNo.toString().padStart(charLength, " "));
     const cursorLine = view.state.doc.lineAt(
       view.state.selection.asSingle().ranges[0].to
     ).number;
@@ -33,15 +43,17 @@ const absoluteLineNumberGutter = gutter({
 
     return null;
   },
-  initialSpacer: () => {
-    const spacer = new Marker("0");
+  initialSpacer: (view: EditorView) => {
+    const spacer = new Marker("0".repeat(linesCharLength(view.state)));
     return spacer;
   },
 });
 
 function relativeLineNumbers(lineNo: number, state: EditorState) {
+  const charLength = linesCharLength(state);
+  const blank = " ".padStart(charLength, " ");
   if (lineNo > state.doc.lines) {
-    return " ";
+    return blank;
   }
   const cursorLine = state.doc.lineAt(
     state.selection.asSingle().ranges[0].to
@@ -63,9 +75,9 @@ function relativeLineNumbers(lineNo: number, state: EditorState) {
   })
 
   if (lineNo === cursorLine) {
-    return " ";
+    return blank;
   } else {
-    return (Math.abs(cursorLine - lineNo)-foldedCount).toString();
+    return (Math.abs(cursorLine - lineNo) - foldedCount).toString().padStart(charLength, " ");
   }
 }
 // This shows the numbers in the gutter
