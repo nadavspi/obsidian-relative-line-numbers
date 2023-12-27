@@ -1,7 +1,9 @@
 import { Plugin } from "obsidian";
 import { lineNumbersRelative } from "./extension";
+import { Extension } from "@codemirror/state";
 
 export default class RelativeLineNumbers extends Plugin {
+  private editorExtension: Extension[] = [];
   enabled: boolean;
 
   isLegacy() {
@@ -9,6 +11,7 @@ export default class RelativeLineNumbers extends Plugin {
   }
 
   async onload() {
+    this.registerEditorExtension(this.editorExtension);
     // @ts-ignore
     const showLineNumber: Boolean = this.app.vault.getConfig("showLineNumber");
     if (showLineNumber) {
@@ -16,6 +19,19 @@ export default class RelativeLineNumbers extends Plugin {
     }
 
     this.setupConfigChangeListener();
+    this.addCommand({
+      id: "toggle-relative-line-numbers",
+      name: "Toggle Relative Line Numbers",
+      callback: () => {
+        if (showLineNumber) {
+          if (this.enabled) {
+            this.disable();
+          } else {
+            this.enable();
+          }
+        }
+      },
+    });
   }
 
   onunload() {
@@ -28,15 +44,19 @@ export default class RelativeLineNumbers extends Plugin {
     if (this.isLegacy()) {
       this.legacyEnable();
     } else {
-      // @ts-ignore
-      this.registerEditorExtension(lineNumbersRelative());
+      this.editorExtension.length = 0;
+      this.editorExtension.push(lineNumbersRelative());
+      this.app.workspace.updateOptions();
     }
   }
 
   disable() {
     this.enabled = false;
-    if (this.isLegacy) {
+    if (this.isLegacy()) {
       this.legacyDisable();
+    } else {
+      this.editorExtension.length = 0;
+      this.app.workspace.updateOptions();
     }
   }
 
@@ -49,7 +69,6 @@ export default class RelativeLineNumbers extends Plugin {
   legacyDisable() {
     this.app.workspace.iterateCodeMirrors((cm) => {
       cm.off("cursorActivity", this.legacyRelativeLineNumbers);
-      // @ts-ignore
       cm.setOption(
         "lineNumberFormatter",
         // @ts-ignore
@@ -61,10 +80,9 @@ export default class RelativeLineNumbers extends Plugin {
   setupConfigChangeListener() {
     // @ts-ignore
     const configChangedEvent = this.app.vault.on("config-changed", () => {
-      // @ts-ignore
-      const showLineNumber: Boolean = this.app.vault.getConfig(
-        "showLineNumber"
-      );
+      const showLineNumber: Boolean =
+        // @ts-ignore
+        this.app.vault.getConfig("showLineNumber");
       if (showLineNumber && !this.enabled) {
         this.enable();
       } else if (!showLineNumber && this.enabled) {
