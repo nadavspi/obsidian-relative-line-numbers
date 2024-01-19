@@ -1,9 +1,10 @@
-import { Plugin } from "obsidian";
+import { MarkdownView, Plugin } from "obsidian";
 import { lineNumbersRelative } from "./extension";
 import { Extension } from "@codemirror/state";
 
 export default class RelativeLineNumbers extends Plugin {
   private editorExtension: Extension[] = [];
+  private initialized = false;
   enabled: boolean;
 
   isLegacy() {
@@ -32,7 +33,45 @@ export default class RelativeLineNumbers extends Plugin {
         }
       },
     });
+    this.app.workspace.on("active-leaf-change", async () => {
+      this.updateSmartMode();
+    });
+
+    this.app.workspace.on("file-open", async () => {
+      this.updateSmartMode();
+    });
   }
+
+  async initialize() {
+    if (this.initialized) return;
+
+    this.app.workspace.on("active-leaf-change", async () => {
+      this.updateSmartMode();
+    });
+
+    this.app.workspace.on("file-open", async () => {
+      this.updateSmartMode();
+    });
+
+    this.initialized = true;
+  }
+
+  async updateSmartMode() {
+    let view = this.app.workspace.getActiveViewOfType(MarkdownView);
+    if (view) {
+      const cmEditor = (view as any).editMode?.editor?.cm?.cm;
+      cmEditor.off("vim-mode-change", this.logVimModeChange);
+      cmEditor.on("vim-mode-change", this.logVimModeChange);
+    }
+  }
+
+  logVimModeChange = async (cm: any) => {
+    if (cm.mode === "insert") {
+      this.disable();
+    } else {
+      this.enable();
+    }
+  };
 
   onunload() {
     this.disable();
