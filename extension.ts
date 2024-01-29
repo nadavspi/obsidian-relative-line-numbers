@@ -4,6 +4,8 @@ import { Compartment, EditorState } from "@codemirror/state";
 import {foldedRanges} from "@codemirror/language"
 
 let relativeLineNumberGutter = new Compartment();
+let cursorLine: number = -1;
+let selectionTo: number = -1;
 
 class Marker extends GutterMarker {
   /** The text to render in gutter */
@@ -55,16 +57,21 @@ function relativeLineNumbers(lineNo: number, state: EditorState) {
   if (lineNo > state.doc.lines) {
     return blank;
   }
-  const cursorLine = state.doc.lineAt(
-    state.selection.asSingle().ranges[0].to
-  ).number;
-  
 
-  const start = Math.min( state.doc.line(lineNo).from, 
-                          state.selection.asSingle().ranges[0].to)
+  if (selectionTo == -1) {
+    selectionTo = state.selection.asSingle().ranges[0].to;
+    const newCursorLine = state.doc.lineAt(selectionTo).number;
+  }
+  const selectionFrom = state.doc.line(lineNo).from;
 
-  const stop = Math.max( state.doc.line(lineNo).from, 
-                          state.selection.asSingle().ranges[0].to)
+  let start, stop;
+  if (selectionTo > selectionFrom) {
+    start = selectionFrom;
+    selectionTo = selectionTo;
+  } else {
+    start = selectionTo;
+    selectionTo = selectionFrom;
+  }
 
   const folds = foldedRanges(state)
   let foldedCount = 0
@@ -80,6 +87,7 @@ function relativeLineNumbers(lineNo: number, state: EditorState) {
     return (Math.abs(cursorLine - lineNo) - foldedCount).toString().padStart(charLength, " ");
   }
 }
+
 // This shows the numbers in the gutter
 const showLineNumbers = relativeLineNumberGutter.of(
   lineNumbers({ formatNumber: relativeLineNumbers })
@@ -90,6 +98,14 @@ const showLineNumbers = relativeLineNumberGutter.of(
 const lineNumbersUpdateListener = EditorView.updateListener.of(
   (viewUpdate: ViewUpdate) => {
     if (viewUpdate.selectionSet) {
+      
+      const state = viewUpdate.state;
+      selectionTo = state.selection.asSingle().ranges[0].to;
+      const newCursorLine = state.doc.lineAt(selectionTo).number;
+
+      if (newCursorLine == cursorLine) return;
+      cursorLine = newCursorLine;
+
       viewUpdate.view.dispatch({
         effects: relativeLineNumberGutter.reconfigure(
           lineNumbers({ formatNumber: relativeLineNumbers })
